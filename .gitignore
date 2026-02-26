@@ -1,0 +1,84 @@
+# ---------------------------
+# Node / JS / TS
+# ---------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+.npm/
+.yarn/
+.yarnrc.yml
+
+# build outputs
+dist/
+build/
+out/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# env files (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+!.env.template
+
+# ---------------------------
+# Framework / tooling caches
+# ---------------------------
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.turbo/
+.next/
+.nuxt/
+.vite/
+.vitest/
+jest-cache/
+storybook-static/
+
+# React (CRA) cache/build
+client/build/
+client/node_modules/
+
+# Express / server artifacts
+server/dist/
+server/node_modules/
+
+# ---------------------------
+# Logs
+# ---------------------------
+logs/
+*.log
+
+# ---------------------------
+# OS / Editor
+# ---------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+.idea/
+*.iml
+
+# ---------------------------
+# Docker / Compose overrides (optional)
+# ---------------------------
+docker-compose.override.yml
+
+# ---------------------------
+# Misc
+# ---------------------------
+*.pem
+*.key

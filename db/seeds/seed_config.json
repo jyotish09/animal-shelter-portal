@@ -1,0 +1,76 @@
+{
+  "db_path": "../shelter.sqlite",
+  "reset": true,
+  "random_seed": 42,
+  "dog_api_base_url": "https://dog.ceo/api",
+  "pets": {
+    "total": 30,
+    "status_counts": {
+      "AVAILABLE": 22,
+      "PENDING": 8,
+      "ADOPTED": 0
+    },
+    "age_years_min": 1,
+    "age_years_max": 12,
+    "name_pool": [
+      "Buddy",
+      "Bella",
+      "Charlie",
+      "Lucy",
+      "Max",
+      "Daisy",
+      "Cooper",
+      "Lola",
+      "Rocky",
+      "Molly",
+      "Milo",
+      "Bailey",
+      "Teddy",
+      "Zoe",
+      "Bear",
+      "Sadie",
+      "Leo",
+      "Ruby",
+      "Finn",
+      "Rosie",
+      "Ollie",
+      "Poppy",
+      "Jasper",
+      "Willow",
+      "Archie",
+      "Ivy",
+      "Oscar",
+      "Mia",
+      "Scout",
+      "Nala"
+    ]
+  },
+  "applications": {
+    "enabled": true,
+    "per_pending_pet_min": 2,
+    "per_pending_pet_max": 4,
+    "applicant_name_pool": [
+      "Alex Nguyen",
+      "Sam Taylor",
+      "Jordan Lee",
+      "Casey Morgan",
+      "Taylor Singh",
+      "Riley Chen",
+      "Avery Patel",
+      "Jamie Brown",
+      "Morgan Wilson",
+      "Chris Johnson"
+    ],
+    "contact_templates": [
+      "{first}.{last}{n}@example.com",
+      "+61 4{a}{b}{c} {d}{e}{f} {g}{h}{i}"
+    ],
+    "reason_pool": [
+      "Looking for a companion and can provide a stable home.",
+      "Active lifestyle; daily walks and enrichment are part of my routine.",
+      "Have prior dog experience and a safe, fenced yard.",
+      "Want to adopt and provide long-term care and training.",
+      "Work-from-home most days, so the dog won't be left alone."
+    ]
+  }
+}
