@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Box,
   Paper,
@@ -20,7 +20,8 @@ import {
   Pagination,
   Skeleton,
   Snackbar,
-  IconButton
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DoneIcon from '@mui/icons-material/Done';
@@ -29,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { useAdminApplications } from '../hooks/useAdminApplications';
 import { useApproveApplication } from '../hooks/useApproveApplication';
 import ApplicationDetailModal from '../components/ApplicationDetailModal';
+import { usePetsByIds } from '../hooks/usePetsByIds';
 
 const STATUS_ALL = 'ALL';
 
@@ -47,24 +49,25 @@ function shortId(id) {
   return `${id.slice(0, 8)}…${id.slice(-4)}`;
 }
 
+function isUuid(s) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(s || '').trim());
+}
+
 export default function AdminPage() {
   const { t } = useTranslation();
 
   const [status, setStatus] = useState(STATUS_ALL);
-  const [petId, setPetId] = useState('');
+  const [petSearch, setPetSearch] = useState('');
   const [page, setPage] = useState(1);
   const limit = 10;
 
   const [toast, setToast] = useState({ open: false, message: '' });
 
-  // Row modal state
   const [selected, setSelected] = useState(null);
-
-  // 2-step confirm state
   const [confirmId, setConfirmId] = useState(null);
 
   const statusParam = status === STATUS_ALL ? undefined : status;
-  const petIdParam = petId.trim() || undefined;
+  const petIdParam = useMemo(() => (isUuid(petSearch) ? petSearch.trim() : undefined), [petSearch]);
 
   const appsQuery = useAdminApplications({ status: statusParam, petId: petIdParam, page, limit });
   const approveMutation = useApproveApplication();
@@ -72,8 +75,17 @@ export default function AdminPage() {
   const rows = appsQuery.data?.data || [];
   const meta = appsQuery.data?.meta;
 
-  const emptyState = !appsQuery.isLoading && rows.length === 0;
+  const petIds = useMemo(() => rows.map((r) => r.petId), [rows]);
+  const { petMap } = usePetsByIds(petIds);
 
+  const filteredRows = useMemo(() => {
+    const q = petSearch.trim().toLowerCase();
+    if (!q || isUuid(q)) return rows;
+
+    return rows.filter((r) => (petMap[r.petId]?.name || '').toLowerCase().includes(q));
+  }, [rows, petSearch, petMap]);
+
+  const emptyState = !appsQuery.isLoading && filteredRows.length === 0;
   const canApprove = (row) => row.status === 'SUBMITTED';
 
   async function approve(applicationId) {
@@ -88,14 +100,10 @@ export default function AdminPage() {
 
   function onApproveClick(e, row) {
     e.stopPropagation();
-
     if (!canApprove(row) || approveMutation.isPending) return;
 
-    if (confirmId === row.id) {
-      approve(row.id);
-    } else {
-      setConfirmId(row.id);
-    }
+    if (confirmId === row.id) approve(row.id);
+    else setConfirmId(row.id);
   }
 
   function onCancelConfirm(e) {
@@ -115,7 +123,6 @@ export default function AdminPage() {
           </Typography>
         </Stack>
 
-        {/* Filters */}
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mt: 2.5, alignItems: { md: 'center' } }}>
           <FormControl sx={{ minWidth: 200 }}>
             <Select
@@ -135,26 +142,27 @@ export default function AdminPage() {
           </FormControl>
 
           <TextField
-            value={petId}
+            value={petSearch}
             onChange={(e) => {
-              setPetId(e.target.value);
+              setPetSearch(e.target.value);
               setPage(1);
               setConfirmId(null);
             }}
-            label="Pet ID (optional)"
-            placeholder="uuid"
+            label="Pet name (or paste Pet ID)"
+            placeholder="e.g., Charlie"
             fullWidth
+            helperText={isUuid(petSearch) ? 'Filtering by Pet ID (server-side).' : 'Filtering by Pet name (current page).'}
           />
 
           <Button
             variant="outlined"
             onClick={() => {
               setStatus(STATUS_ALL);
-              setPetId('');
+              setPetSearch('');
               setPage(1);
               setConfirmId(null);
             }}
-            sx={{ borderRadius: 999, fontWeight: 900, whiteSpace: 'nowrap' }}
+            // sx={{ borderRadius: 999, fontWeight: 900, whiteSpace: 'nowrap' }}
           >
             Clear filters
           </Button>
@@ -176,9 +184,7 @@ export default function AdminPage() {
                   <TableCell sx={{ fontWeight: 900 }}>Contact</TableCell>
                   <TableCell sx={{ fontWeight: 900 }}>Pet</TableCell>
                   <TableCell sx={{ fontWeight: 900 }}>Created</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 900 }}>
-                    Action
-                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 900 }}>Action</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -186,30 +192,22 @@ export default function AdminPage() {
                 {appsQuery.isLoading
                   ? Array.from({ length: 6 }).map((_, i) => (
                       <TableRow key={i}>
-                        <TableCell>
-                          <Skeleton width={90} />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton width={160} />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton width={170} />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton width={120} />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton width={120} />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Skeleton width={120} />
-                        </TableCell>
+                        <TableCell><Skeleton width={90} /></TableCell>
+                        <TableCell><Skeleton width={160} /></TableCell>
+                        <TableCell><Skeleton width={170} /></TableCell>
+                        <TableCell><Skeleton width={150} /></TableCell>
+                        <TableCell><Skeleton width={120} /></TableCell>
+                        <TableCell align="right"><Skeleton width={120} /></TableCell>
                       </TableRow>
                     ))
-                  : rows.map((row) => {
+                  : filteredRows.map((row) => {
                       const chip = statusChipProps(row.status);
                       const isConfirming = confirmId === row.id;
                       const isRowApproving = approveMutation.isPending && approveMutation.variables === row.id;
+
+                      const pet = petMap[row.petId];
+                      const petName = pet?.name;
+                      const petCell = petName ? petName : shortId(row.petId);
 
                       return (
                         <TableRow
@@ -226,7 +224,18 @@ export default function AdminPage() {
                           </TableCell>
                           <TableCell sx={{ fontWeight: 800 }}>{row.applicantName}</TableCell>
                           <TableCell sx={{ fontFamily: 'monospace' }}>{row.contact}</TableCell>
-                          <TableCell sx={{ fontFamily: 'monospace' }}>{shortId(row.petId)}</TableCell>
+
+                          <TableCell>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Typography sx={{ fontWeight: 800 }}>{petCell}</Typography>
+                              <Tooltip title={`Pet ID: ${row.petId}`}>
+                                <Typography sx={{ fontFamily: 'monospace', color: 'text.secondary', fontWeight: 700 }}>
+                                  {shortId(row.petId)}
+                                </Typography>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+
                           <TableCell>{row.createdAt}</TableCell>
                           <TableCell align="right">
                             {canApprove(row) ? (
@@ -238,12 +247,7 @@ export default function AdminPage() {
                                   startIcon={isConfirming ? <DoneIcon /> : <CheckCircleIcon />}
                                   disabled={approveMutation.isPending}
                                   onClick={(e) => onApproveClick(e, row)}
-                                  sx={{
-                                    borderRadius: 999,
-                                    fontWeight: 900,
-                                    transition: 'all 160ms ease',
-                                    transform: isConfirming ? 'scale(1.02)' : 'none'
-                                  }}
+                                  sx={{ borderRadius: 999, fontWeight: 900, transition: 'all 160ms ease', transform: isConfirming ? 'scale(1.02)' : 'none' }}
                                 >
                                   {isRowApproving ? 'Approving…' : isConfirming ? 'Confirm' : 'Approve'}
                                 </Button>
@@ -253,24 +257,14 @@ export default function AdminPage() {
                                     size="small"
                                     onClick={onCancelConfirm}
                                     aria-label="Cancel approve"
-                                    sx={{
-                                      border: '1px solid',
-                                      borderColor: 'divider',
-                                      bgcolor: 'background.paper'
-                                    }}
+                                    sx={{ border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}
                                   >
                                     <CloseIcon fontSize="small" />
                                   </IconButton>
                                 ) : null}
                               </Stack>
                             ) : (
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                disabled
-                                onClick={(e) => e.stopPropagation()}
-                                sx={{ borderRadius: 999, fontWeight: 900 }}
-                              >
+                              <Button variant="outlined" size="small" disabled onClick={(e) => e.stopPropagation()} sx={{ borderRadius: 999, fontWeight: 900 }}>
                                 {row.status === 'APPROVED' ? 'Approved' : 'N/A'}
                               </Button>
                             )}
