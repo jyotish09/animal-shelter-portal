@@ -31,7 +31,18 @@ async function getApplicationById(db, applicationId) {
   return row ? mapApplication(row) : null;
 }
 
-async function listApplications(db, opts = {}) {
+/**
+ * List applications with offset pagination and optional filters.
+ *
+ * @param {import('sqlite').Database} db
+ * @param {{ status?: string, petId?: string, page?: number, limit?: number }} [opts]
+ * @returns {Promise<{items: any[], total: number}>}
+ */
+async function listApplicationsPaged(db, opts = {}) {
+  const page = Number(opts.page ?? 1);
+  const limit = Number(opts.limit ?? 20);
+  const offset = (page - 1) * limit;
+
   const params = [];
   const where = [];
 
@@ -44,13 +55,19 @@ async function listApplications(db, opts = {}) {
     params.push(opts.petId);
   }
 
-  const sql =
-    "SELECT * FROM applications" +
-    (where.length ? " WHERE " + where.join(" AND ") : "") +
-    " ORDER BY created_at DESC";
+  const whereSql = where.length ? " WHERE " + where.join(" AND ") : "";
 
-  const rows = await db.all(sql, params);
-  return rows.map(mapApplication);
+  const totalRow = await db.get(
+    `SELECT COUNT(*) AS total FROM applications${whereSql}`,
+    params
+  );
+
+  const rows = await db.all(
+    `SELECT * FROM applications${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
+  );
+
+  return { items: rows.map(mapApplication), total: Number(totalRow.total) };
 }
 
 async function markApproved(db, applicationId) {
@@ -69,19 +86,37 @@ async function invalidateOtherSubmitted(db, petId, approvedApplicationId) {
   );
 }
 
-async function listApplicationsForPet(db, petId) {
-  const rows = await db.all(
-    "SELECT * FROM applications WHERE pet_id = ? ORDER BY created_at DESC",
+/**
+ * List applications for a pet with offset pagination.
+ *
+ * @param {import('sqlite').Database} db
+ * @param {string} petId
+ * @param {{ page?: number, limit?: number }} [opts]
+ * @returns {Promise<{items: any[], total: number}>}
+ */
+async function listApplicationsForPetPaged(db, petId, opts = {}) {
+  const page = Number(opts.page ?? 1);
+  const limit = Number(opts.limit ?? 20);
+  const offset = (page - 1) * limit;
+
+  const totalRow = await db.get(
+    `SELECT COUNT(*) AS total FROM applications WHERE pet_id = ?`,
     [petId]
   );
-  return rows.map(mapApplication);
+
+  const rows = await db.all(
+    `SELECT * FROM applications WHERE pet_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    [petId, limit, offset]
+  );
+
+  return { items: rows.map(mapApplication), total: Number(totalRow.total) };
 }
 
 module.exports = {
   createApplication,
   getApplicationById,
-  listApplications,
-  listApplicationsForPet,
+  listApplicationsPaged,
+  listApplicationsForPetPaged,
   markApproved,
   invalidateOtherSubmitted
 };

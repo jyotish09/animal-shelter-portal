@@ -18,18 +18,43 @@ function mapPet(row) {
 }
 
 /**
+ * List pets with offset pagination.
+ *
  * @param {import('sqlite').Database} db
- * @param {{ status?: string }} [opts]
+ * @param {{ status?: string, page?: number, limit?: number }} [opts]
+ * @returns {Promise<{items: any[], total: number}>}
  */
-async function listPets(db, opts = {}) {
-  const { status } = opts;
-  const rows = status
-    ? await db.all("SELECT * FROM pets WHERE status = ? ORDER BY created_at DESC", [status])
-    : await db.all("SELECT * FROM pets ORDER BY created_at DESC");
-  return rows.map(mapPet);
+async function listPetsPaged(db, opts = {}) {
+  const page = Number(opts.page ?? 1);
+  const limit = Number(opts.limit ?? 20);
+  const offset = (page - 1) * limit;
+
+  const params = [];
+  const where = [];
+
+  if (opts.status) {
+    where.push("status = ?");
+    params.push(opts.status);
+  }
+
+  const whereSql = where.length ? " WHERE " + where.join(" AND ") : "";
+
+  const totalRow = await db.get(
+    `SELECT COUNT(*) AS total FROM pets${whereSql}`,
+    params
+  );
+
+  const rows = await db.all(
+    `SELECT * FROM pets${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
+  );
+
+  return { items: rows.map(mapPet), total: Number(totalRow.total) };
 }
 
 /**
+ * Get a pet by ID.
+ *
  * @param {import('sqlite').Database} db
  * @param {string} petId
  */
@@ -39,6 +64,8 @@ async function getPetById(db, petId) {
 }
 
 /**
+ * Update a pet's status and return the updated pet.
+ *
  * @param {import('sqlite').Database} db
  * @param {string} petId
  * @param {string} status
@@ -48,4 +75,4 @@ async function updatePetStatus(db, petId, status) {
   return getPetById(db, petId);
 }
 
-module.exports = { listPets, getPetById, updatePetStatus };
+module.exports = { listPetsPaged, getPetById, updatePetStatus };

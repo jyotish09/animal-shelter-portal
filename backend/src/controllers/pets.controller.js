@@ -1,20 +1,51 @@
 /**
  * src/controllers/pets.controller.js
+ *
+ * HTTP controllers for pet endpoints.
+ * Controllers should:
+ * - Read validated request data
+ * - Call services
+ * - Return JSON
  */
 
 const petsService = require('../services/pets.service');
 const { notFound } = require('../middleware/error.middleware');
 
+function paginationMeta(page, limit, total) {
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  return { page, limit, total, totalPages };
+}
+
+/**
+ * GET /api/pets
+ * Query:
+ * - status?: string
+ * - page?: number (default 1)
+ * - limit?: number (default 20)
+ */
 async function listPets(req, res, next) {
   try {
-    const status = req.query.status;
-    const pets = await petsService.listPets(status ? { status } : {});
-    return res.json({ data: pets, requestId: req.id });
+    const { status, page = 1, limit = 20 } = req.query;
+
+    const { items, total } = await petsService.listPets({
+      status,
+      page,
+      limit
+    });
+
+    return res.json({
+      data: items,
+      meta: paginationMeta(page, limit, total),
+      requestId: req.id
+    });
   } catch (err) {
     return next(err);
   }
 }
 
+/**
+ * GET /api/pets/:petId
+ */
 async function getPet(req, res, next) {
   try {
     const { petId } = req.params;

@@ -1,5 +1,7 @@
 /**
  * src/routes/admin.routes.js
+ *
+ * Admin routes (no auth per requirements).
  */
 
 const express = require('express');
@@ -10,13 +12,35 @@ const {
   listApplicationsQuerySchema,
   petParamsSchema
 } = require('../validators/applications.schemas');
+const { paginationQuerySchema } = require('../validators/pagination.schemas');
 
 const router = express.Router();
 
-router.get('/applications', validate({ query: listApplicationsQuerySchema }), adminController.listApplications);
+/**
+ * GET /api/admin/applications?status=SUBMITTED&petId=<uuid>&page=1&limit=20
+ */
+router.get(
+  '/applications',
+  validate({ query: listApplicationsQuerySchema.merge(paginationQuerySchema) }),
+  adminController.listApplications
+);
 
-router.get('/pets/:petId/applications', validate({ params: petParamsSchema }), adminController.listApplicationsForPet);
+/**
+ * GET /api/admin/pets/:petId/applications?page=1&limit=20
+ */
+router.get(
+  '/pets/:petId/applications',
+  validate({ params: petParamsSchema, query: paginationQuerySchema }),
+  adminController.listApplicationsForPet
+);
 
-router.patch('/applications/:applicationId/approve', validate({ params: approveParamsSchema }), adminController.approveApplication);
+/**
+ * PATCH /api/admin/applications/:applicationId/approve
+ */
+router.patch(
+  '/applications/:applicationId/approve',
+  validate({ params: approveParamsSchema }),
+  adminController.approveApplication
+);
 
 module.exports = { adminRouter: router };

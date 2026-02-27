@@ -78,14 +78,14 @@ async function approveApplication(applicationId) {
 
 async function listApplications(opts = {}) {
   const db = await getDb();
-  return appsRepo.listApplications(db, opts);
+  return appsRepo.listApplicationsPaged(db, opts);
 }
 
-async function listApplicationsForPet(petId) {
+async function listApplicationsForPet(petId, pageOpts = {}) {
   const db = await getDb();
   const pet = await petsRepo.getPetById(db, petId);
   if (!pet) throw notFound('Pet not found', { petId });
-  return appsRepo.listApplicationsForPet(db, petId);
+  return appsRepo.listApplicationsForPetPaged(db, petId, pageOpts);
 }
 
 module.exports = {
