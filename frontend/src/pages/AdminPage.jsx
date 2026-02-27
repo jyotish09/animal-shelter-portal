@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import debounce from 'lodash/debounce';
 import {
   Box,
   Paper,
@@ -68,7 +69,13 @@ export default function AdminPage() {
   const { t } = useTranslation();
 
   const [status, setStatus] = useState(STATUS_ALL);
-  const [petName, setPetName] = useState('');
+
+  // raw input
+  const [petNameInput, setPetNameInput] = useState('');
+
+  // debounced query sent to backend
+  const [searchQuery, setSearchQuery] = useState('');
+
   const [page, setPage] = useState(1);
   const limit = 10;
 
@@ -81,26 +88,40 @@ export default function AdminPage() {
   const [confirmId, setConfirmId] = useState(null);
 
   const statusParam = status === STATUS_ALL ? undefined : status;
+  const searchParam = searchQuery.trim() ? searchQuery.trim() : undefined;
 
-  // NOTE: filtering is by PET NAME only (client-side on the loaded page)
-  const appsQuery = useAdminApplications({ status: statusParam, page, limit });
+  const debouncedSetSearchQuery = useMemo(
+    () =>
+      debounce((value) => {
+        setPage(1);
+        setSearchQuery(value.trim());
+      }, 350),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
+
+  const appsQuery = useAdminApplications({
+    status: statusParam,
+    search: searchParam,
+    page,
+    limit
+  });
+
   const approveMutation = useApproveApplication();
 
   const rows = appsQuery.data?.data || [];
   const meta = appsQuery.data?.meta;
 
-  // Resolve petId -> pet (name, etc)
+  // keep this only for display enrichment
   const petIds = useMemo(() => rows.map((r) => r.petId), [rows]);
   const { petMap } = usePetsByIds(petIds);
 
-  const filteredRows = useMemo(() => {
-    const q = petName.trim().toLowerCase();
-    if (!q) return rows;
-
-    return rows.filter((r) => (petMap[r.petId]?.name || '').toLowerCase().includes(q));
-  }, [rows, petName, petMap]);
-
-  const emptyState = !appsQuery.isLoading && filteredRows.length === 0;
+  const emptyState = !appsQuery.isLoading && rows.length === 0;
   const canApprove = (row) => row.status === 'SUBMITTED';
 
   async function approve(applicationId) {
@@ -162,14 +183,15 @@ export default function AdminPage() {
           </FormControl>
 
           <TextField
-            value={petName}
+            value={petNameInput}
             onChange={(e) => {
-              setPetName(e.target.value);
-              setPage(1);
+              const value = e.target.value;
+              setPetNameInput(value);
               setConfirmId(null);
+              debouncedSetSearchQuery(value);
             }}
             label="Pet name"
-            placeholder="e.g., Charlie"
+            placeholder="e.g., Lola"
             fullWidth
           />
 
@@ -178,7 +200,9 @@ export default function AdminPage() {
             color="secondary"
             onClick={() => {
               setStatus(STATUS_ALL);
-              setPetName('');
+              setPetNameInput('');
+              setSearchQuery('');
+              debouncedSetSearchQuery.cancel();
               setPage(1);
               setConfirmId(null);
             }}
@@ -190,6 +214,12 @@ export default function AdminPage() {
         {appsQuery.isError ? (
           <Alert severity="error" sx={{ mt: 2 }}>
             {appsQuery.error?.message || t('common.error')}
+          </Alert>
+        ) : null}
+
+        {!appsQuery.isLoading && rows.length === 0 ? (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            No applications found for the current filters.
           </Alert>
         ) : null}
 
@@ -221,10 +251,11 @@ export default function AdminPage() {
                         <TableCell align="right"><Skeleton width={120} /></TableCell>
                       </TableRow>
                     ))
-                  : filteredRows.map((row) => {
+                  : rows.map((row) => {
                       const chip = statusChipProps(row.status);
                       const isConfirming = confirmId === row.id;
-                      const isRowApproving = approveMutation.isPending && approveMutation.variables === row.id;
+                      const isRowApproving =
+                        approveMutation.isPending && approveMutation.variables === row.id;
 
                       const petNameLabel = petMap[row.petId]?.name || '—';
 
@@ -246,10 +277,12 @@ export default function AdminPage() {
                               sx={{ fontWeight: 900, ...chip.sx }}
                             />
                           </TableCell>
+
                           <TableCell sx={{ fontWeight: 800 }}>{row.applicantName}</TableCell>
                           <TableCell sx={{ fontFamily: 'monospace' }}>{row.contact}</TableCell>
                           <TableCell sx={{ fontWeight: 800 }}>{petNameLabel}</TableCell>
                           <TableCell>{row.createdAt}</TableCell>
+
                           <TableCell align="right">
                             {canApprove(row) ? (
                               <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
@@ -300,14 +333,6 @@ export default function AdminPage() {
                         </TableRow>
                       );
                     })}
-
-                {emptyState ? (
-                  <TableRow>
-                    <TableCell colSpan={6}>
-                      <Alert severity="info">No applications found for the current filters.</Alert>
-                    </TableCell>
-                  </TableRow>
-                ) : null}
               </TableBody>
             </Table>
           </TableContainer>
@@ -329,7 +354,11 @@ export default function AdminPage() {
         </Box>
       </Paper>
 
-      <ApplicationDetailModal open={Boolean(selected)} onClose={() => setSelected(null)} application={selected} />
+      <ApplicationDetailModal
+        open={Boolean(selected)}
+        onClose={() => setSelected(null)}
+        application={selected}
+      />
 
       <Snackbar
         open={toast.open}

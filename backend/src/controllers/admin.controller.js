@@ -21,11 +21,11 @@ function paginationMeta(page, limit, total) {
  */
 async function listApplications(req, res, next) {
   try {
-    const { status, petId, page = 1, limit = 20 } = req.query;
+    const { status, search, page = 1, limit = 20 } = req.query;
 
     const { items, total } = await adoptionService.listApplications({
       status,
-      petId,
+      search,
       page,
       limit
     });

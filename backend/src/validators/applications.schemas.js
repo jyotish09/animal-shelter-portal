@@ -26,7 +26,14 @@ const approveParamsSchema = z.object({
 
 const listApplicationsQuerySchema = z.object({
   status: z.enum(['SUBMITTED', 'APPROVED', 'INVALIDATED']).optional(),
-  petId: z.string().uuid().optional()
+  search: z.preprocess(
+    (value) => {
+      if (typeof value !== 'string') return value;
+      const trimmed = value.trim();
+      return trimmed === '' ? undefined : trimmed;
+    },
+    z.string().max(100).optional()
+  )
 });
 
 module.exports = {

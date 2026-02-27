@@ -2,11 +2,11 @@ import { httpJson } from './http';
 
 /**
  * GET /api/admin/applications (paginated)
- * Query: status?, petId?, page?, limit?
+ * Query: status?, search?, page?, limit?
  */
-export function fetchAdminApplications({ status, petId, page, limit }) {
+export function fetchAdminApplications({ status, search, page, limit }) {
   return httpJson('/api/admin/applications', {
-    query: { status, petId, page, limit }
+    query: { status, search, page, limit }
   });
 }
 

@@ -17,7 +17,7 @@ const { paginationQuerySchema } = require('../validators/pagination.schemas');
 const router = express.Router();
 
 /**
- * GET /api/admin/applications?status=SUBMITTED&petId=<uuid>&page=1&limit=20
+ * GET /api/admin/applications?status=SUBMITTED&search=lola&page=1&limit=10
  */
 router.get(
   '/applications',

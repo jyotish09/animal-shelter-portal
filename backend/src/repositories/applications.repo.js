@@ -34,8 +34,12 @@ async function getApplicationById(db, applicationId) {
 /**
  * List applications with offset pagination and optional filters.
  *
+ * Supported filters:
+ * - status
+ * - search: case-insensitive pet name search (joins pets table)
+ *
  * @param {import('sqlite').Database} db
- * @param {{ status?: string, petId?: string, page?: number, limit?: number }} [opts]
+ * @param {{ status?: string, search?: string, page?: number, limit?: number }} [opts]
  * @returns {Promise<{items: any[], total: number}>}
  */
 async function listApplicationsPaged(db, opts = {}) {
@@ -47,27 +51,39 @@ async function listApplicationsPaged(db, opts = {}) {
   const where = [];
 
   if (opts.status) {
-    where.push("status = ?");
+    where.push('a.status = ?');
     params.push(opts.status);
   }
-  if (opts.petId) {
-    where.push("pet_id = ?");
-    params.push(opts.petId);
+
+  if (opts.search) {
+    where.push('LOWER(p.name) LIKE ?');
+    params.push(`%${String(opts.search).toLowerCase()}%`);
   }
 
-  const whereSql = where.length ? " WHERE " + where.join(" AND ") : "";
+  const whereSql = where.length ? ` WHERE ${where.join(' AND ')}` : '';
 
   const totalRow = await db.get(
-    `SELECT COUNT(*) AS total FROM applications${whereSql}`,
+    `SELECT COUNT(*) AS total
+     FROM applications a
+     INNER JOIN pets p ON p.id = a.pet_id
+     ${whereSql}`,
     params
   );
 
   const rows = await db.all(
-    `SELECT * FROM applications${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    `SELECT a.*
+     FROM applications a
+     INNER JOIN pets p ON p.id = a.pet_id
+     ${whereSql}
+     ORDER BY a.created_at DESC
+     LIMIT ? OFFSET ?`,
     [...params, limit, offset]
   );
 
-  return { items: rows.map(mapApplication), total: Number(totalRow.total) };
+  return {
+    items: rows.map(mapApplication),
+    total: Number(totalRow.total)
+  };
 }
 
 async function markApproved(db, applicationId) {
