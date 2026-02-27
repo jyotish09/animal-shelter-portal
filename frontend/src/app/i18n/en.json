@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "brand": "HappyPaws Shelter",
+    "dogs": "Dogs",
+    "howItWorks": "How it works",
+    "about": "About",
+    "admin": "Admin"
+  },
+  "home": {
+    "headline": "Find your new best friend \ud83d\udc3e",
+    "subtext": "Browse dogs ready for a loving home. Applying takes under a minute.",
+    "searchPlaceholder": "Search by name or breed",
+    "filters": {
+      "all": "All",
+      "available": "Available",
+      "pending": "Pending",
+      "adopted": "Adopted"
+    },
+    "age": {
+      "label": "Age",
+      "any": "Any",
+      "puppy": "Puppy",
+      "adult": "Adult",
+      "senior": "Senior"
+    },
+    "sectionTitle": "Dogs near you",
+    "apply": "Apply to adopt",
+    "pendingReview": "Pending review",
+    "adopted": "Adopted \ud83c\udf89",
+    "modal": {
+      "title": "Apply to adopt",
+      "name": "Applicant name",
+      "contact": "Contact info",
+      "reason": "Why do you want to adopt?",
+      "cancel": "Cancel",
+      "submit": "Submit application",
+      "success": "Application submitted. Thank you!"
+    }
+  },
+  "common": {
+    "loading": "Loading\u2026",
+    "error": "Something went wrong.",
+    "retry": "Retry"
+  },
+  "footer": {
+    "contact": "Contact: (02) 5555 0123 \u2022 hello@happypaws.test",
+    "hours": "Adoption hours: Mon\u2013Sat 10am\u20134pm"
+  }
+}
