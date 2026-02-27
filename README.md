@@ -1,5 +1,9 @@
 # Animal Shelter Adoption Portal (Dog Adoption)
 
+![Homepage UI](docs/images/homepage.png)
+
+![Admin UI](docs/images/adminpage.png)
+
 Full-stack demo:
 - **Backend**: Node.js (Express) + SQLite
 - **Frontend**: React (Vite) + Material UI + React Query + React Router
