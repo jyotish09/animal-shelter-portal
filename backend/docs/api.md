@@ -282,3 +282,67 @@ Approve an application and adopt the pet.
   "requestId": "uuid"
 }
 ```
+
+---
+
+## Pets search API
+
+### GET `/api/pets`
+
+Returns a paginated list of pets.
+
+Supports:
+- `search` (optional): case-insensitive search across `name` and `breed`
+- `status` (optional): `AVAILABLE | PENDING | ADOPTED`
+- `page` (optional): default `1`
+- `limit` (optional): default `20`, max `100`
+
+### Example queries
+
+Search by breed:
+```http
+GET /api/pets?search=pug&page=1&limit=12
+````
+
+Search by name:
+
+```http
+GET /api/pets?search=charlie&page=1&limit=12
+```
+
+Search + status:
+
+```http
+GET /api/pets?search=pug&status=AVAILABLE&page=1&limit=12
+```
+
+### Notes
+
+* Search is applied **before pagination**
+* `meta.total` and `meta.totalPages` reflect the **filtered results**
+* Search matches both pet `name` and `breed`
+
+**Response 200**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Milo",
+      "breed": "pug",
+      "ageYears": 1,
+      "status": "AVAILABLE",
+      "imageUrl": "https://images.dog.ceo/...",
+      "createdAt": "2026-02-26 19:03:11",
+      "updatedAt": "2026-02-26 19:03:11"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 12,
+    "total": 2,
+    "totalPages": 1
+  },
+  "requestId": "..."
+}
+```

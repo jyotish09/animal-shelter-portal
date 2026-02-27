@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import debounce from 'lodash/debounce';
 import {
   Box,
   Paper,
@@ -24,34 +25,52 @@ import { usePets } from '../hooks/usePets';
 export default function HomePage() {
   const { t } = useTranslation();
 
-  const [search, setSearch] = useState('');
+  // What user is typing right now
+  const [searchInput, setSearchInput] = useState('');
+
+  // What actually goes to the backend after debounce
+  const [searchQuery, setSearchQuery] = useState('');
+
   const [status, setStatus] = useState(PET_STATUS.ALL);
   const [age, setAge] = useState('ANY');
   const [page, setPage] = useState(1);
+
   const limit = 12;
 
   const statusParam = status === PET_STATUS.ALL ? undefined : status;
+  const searchParam = searchQuery.trim() ? searchQuery.trim() : undefined;
 
-  const petsQuery = usePets({ status: statusParam, page, limit });
+  /**
+   * Debounced backend search:
+   * - avoids firing API requests on every keystroke
+   * - resets page to 1 whenever search changes
+   */
+  const debouncedSetSearchQuery = useMemo(
+    () =>
+      debounce((value) => {
+        setPage(1);
+        setSearchQuery(value.trim());
+      }, 350),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
+
+  const petsQuery = usePets({
+    search: searchParam,
+    status: statusParam,
+    page,
+    limit
+  });
+
   const pets = petsQuery.data?.data || [];
   const meta = petsQuery.data?.meta;
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return pets.filter((p) => {
-      const matchesSearch = !q || p.name.toLowerCase().includes(q) || (p.breed || '').toLowerCase().includes(q);
-
-      const matchesAge =
-        age === 'ANY' ||
-        (age === 'PUPPY' && p.ageYears <= 1) ||
-        (age === 'ADULT' && p.ageYears >= 2 && p.ageYears <= 7) ||
-        (age === 'SENIOR' && p.ageYears >= 8);
-
-      return matchesSearch && matchesAge;
-    });
-  }, [pets, search, age]);
-
-  const countLabel = meta?.total ? `${meta.total} dogs` : `${filtered.length} dogs`;
+  const countLabel = `${meta?.total ?? 0} dogs`;
 
   return (
     <Box>
@@ -66,10 +85,18 @@ export default function HomePage() {
             '#FFFFFF'
         }}
       >
-        <Typography variant="h3" sx={{ fontFamily: 'Nunito', fontWeight: 900, lineHeight: 1.1 }}>
+        <Typography
+          variant="h3"
+          sx={{ fontFamily: 'Nunito', fontWeight: 900, lineHeight: 1.1 }}
+        >
           {t('home.headline')}
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1, fontWeight: 600 }}>
+
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ mt: 1, fontWeight: 600 }}
+        >
           {t('home.subtext')}
         </Typography>
 
@@ -84,8 +111,12 @@ export default function HomePage() {
         >
           <Stack spacing={1.25}>
             <TextField
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchInput(value);
+                debouncedSetSearchQuery(value);
+              }}
               placeholder={t('home.searchPlaceholder')}
               InputProps={{
                 startAdornment: (
@@ -100,7 +131,10 @@ export default function HomePage() {
               <Chip
                 label={t('home.filters.all')}
                 clickable
-                onClick={() => { setStatus(PET_STATUS.ALL); setPage(1); }}
+                onClick={() => {
+                  setStatus(PET_STATUS.ALL);
+                  setPage(1);
+                }}
                 variant={status === PET_STATUS.ALL ? 'filled' : 'outlined'}
                 color={status === PET_STATUS.ALL ? 'primary' : 'default'}
                 sx={{ fontWeight: 900 }}
@@ -108,7 +142,10 @@ export default function HomePage() {
               <Chip
                 label={t('home.filters.available')}
                 clickable
-                onClick={() => { setStatus(PET_STATUS.AVAILABLE); setPage(1); }}
+                onClick={() => {
+                  setStatus(PET_STATUS.AVAILABLE);
+                  setPage(1);
+                }}
                 variant={status === PET_STATUS.AVAILABLE ? 'filled' : 'outlined'}
                 color={status === PET_STATUS.AVAILABLE ? 'primary' : 'default'}
                 sx={{ fontWeight: 900 }}
@@ -116,7 +153,10 @@ export default function HomePage() {
               <Chip
                 label={t('home.filters.pending')}
                 clickable
-                onClick={() => { setStatus(PET_STATUS.PENDING); setPage(1); }}
+                onClick={() => {
+                  setStatus(PET_STATUS.PENDING);
+                  setPage(1);
+                }}
                 variant={status === PET_STATUS.PENDING ? 'filled' : 'outlined'}
                 color={status === PET_STATUS.PENDING ? 'primary' : 'default'}
                 sx={{ fontWeight: 900 }}
@@ -124,7 +164,10 @@ export default function HomePage() {
               <Chip
                 label={t('home.filters.adopted')}
                 clickable
-                onClick={() => { setStatus(PET_STATUS.ADOPTED); setPage(1); }}
+                onClick={() => {
+                  setStatus(PET_STATUS.ADOPTED);
+                  setPage(1);
+                }}
                 variant={status === PET_STATUS.ADOPTED ? 'filled' : 'outlined'}
                 color={status === PET_STATUS.ADOPTED ? 'primary' : 'default'}
                 sx={{ fontWeight: 900 }}
@@ -132,9 +175,20 @@ export default function HomePage() {
             </Stack>
           </Stack>
 
-          <Stack direction="row" spacing={1.25} sx={{ justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+          <Stack
+            direction="row"
+            spacing={1.25}
+            sx={{ justifyContent: { xs: 'flex-start', md: 'flex-end' } }}
+          >
             <FormControl size="medium" sx={{ minWidth: 180 }}>
-              <Select value={age} onChange={(e) => setAge(e.target.value)} displayEmpty>
+              <Select
+                value={age}
+                onChange={(e) => {
+                  setAge(e.target.value);
+                  setPage(1);
+                }}
+                displayEmpty
+              >
                 <MenuItem value="ANY">{t('home.age.any')}</MenuItem>
                 <MenuItem value="PUPPY">{t('home.age.puppy')}</MenuItem>
                 <MenuItem value="ADULT">{t('home.age.adult')}</MenuItem>
@@ -146,16 +200,41 @@ export default function HomePage() {
       </Paper>
 
       <Box sx={{ mt: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', mb: 1.5 }}>
-          <Typography variant="h6" sx={{ fontFamily: 'Nunito', fontWeight: 900 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            mb: 1.5
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ fontFamily: 'Nunito', fontWeight: 900 }}
+          >
             {t('home.sectionTitle')}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontWeight: 700 }}
+          >
             {countLabel}
           </Typography>
         </Box>
 
-        {petsQuery.isError ? <Alert severity="error">{petsQuery.error?.message || t('common.error')}</Alert> : null}
+        {petsQuery.isError ? (
+          <Alert severity="error">
+            {petsQuery.error?.message || t('common.error')}
+          </Alert>
+        ) : null}
+
+        {!petsQuery.isLoading && pets.length === 0 ? (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            No dogs match your search. Try a different breed or clear filters.
+          </Alert>
+        ) : null}
 
         <Grid container spacing={2}>
           {petsQuery.isLoading
@@ -171,7 +250,7 @@ export default function HomePage() {
                   </Paper>
                 </Grid>
               ))
-            : filtered.map((pet) => (
+            : pets.map((pet) => (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={pet.id}>
                   <DogCard pet={pet} />
                 </Grid>
@@ -180,19 +259,29 @@ export default function HomePage() {
 
         {meta?.totalPages && meta.totalPages > 1 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Pagination count={meta.totalPages} page={meta.page} onChange={(_, p) => setPage(p)} color="primary" shape="rounded" />
+            <Pagination
+              count={meta.totalPages}
+              page={meta.page}
+              onChange={(_, p) => setPage(p)}
+              color="primary"
+              shape="rounded"
+            />
           </Box>
         ) : null}
 
         <Box id="how-it-works" sx={{ mt: 6, scrollMarginTop: 90 }}>
-          <Typography variant="h6" sx={{ fontFamily: 'Nunito', fontWeight: 900 }}>How it works</Typography>
+          <Typography variant="h6" sx={{ fontFamily: 'Nunito', fontWeight: 900 }}>
+            How it works
+          </Typography>
           <Typography color="text.secondary" sx={{ mt: 0.75, fontWeight: 600 }}>
             Pick a dog, apply in under a minute, and we’ll contact you to meet your new best friend.
           </Typography>
         </Box>
 
         <Box id="about" sx={{ mt: 4, scrollMarginTop: 90 }}>
-          <Typography variant="h6" sx={{ fontFamily: 'Nunito', fontWeight: 900 }}>About</Typography>
+          <Typography variant="h6" sx={{ fontFamily: 'Nunito', fontWeight: 900 }}>
+            About
+          </Typography>
           <Typography color="text.secondary" sx={{ mt: 0.75, fontWeight: 600 }}>
             HappyPaws is a friendly local shelter helping dogs find loving homes.
           </Typography>

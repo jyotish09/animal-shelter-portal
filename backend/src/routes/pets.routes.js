@@ -20,15 +20,24 @@ const router = express.Router();
 
 /**
  * Pets list query:
- * - status is not strictly validated yet (kept flexible).
- * - page/limit validated and coerced to numbers.
+ * - status: strict enum
+ * - search: optional, trimmed, empty string becomes undefined
+ * - page/limit validated and coerced to numbers
  */
 const listPetsQuerySchema = paginationQuerySchema.extend({
-  status: z.string().optional()
+  status: z.enum(['AVAILABLE', 'PENDING', 'ADOPTED']).optional(),
+  search: z.preprocess(
+    (value) => {
+      if (typeof value !== 'string') return value;
+      const trimmed = value.trim();
+      return trimmed === '' ? undefined : trimmed;
+    },
+    z.string().max(100).optional()
+  )
 });
 
 /**
- * GET /api/pets?status=AVAILABLE&page=1&limit=20
+ * GET /api/pets?search=pug&status=AVAILABLE&page=1&limit=12
  */
 router.get('/', validate({ query: listPetsQuerySchema }), petsController.listPets);
 

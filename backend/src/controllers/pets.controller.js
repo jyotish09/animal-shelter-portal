@@ -19,15 +19,17 @@ function paginationMeta(page, limit, total) {
 /**
  * GET /api/pets
  * Query:
- * - status?: string
+ * - search?: string
+ * - status?: 'AVAILABLE' | 'PENDING' | 'ADOPTED'
  * - page?: number (default 1)
  * - limit?: number (default 20)
  */
 async function listPets(req, res, next) {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
+    const { search, status, page = 1, limit = 20 } = req.query;
 
     const { items, total } = await petsService.listPets({
+      search,
       status,
       page,
       limit

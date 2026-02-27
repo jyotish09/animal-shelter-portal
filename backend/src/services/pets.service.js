@@ -8,9 +8,9 @@ const { getDb } = require('../config/db');
 const petsRepo = require('../repositories/pets.repo');
 
 /**
- * List pets with offset pagination.
+ * List pets with offset pagination and search.
  *
- * @param {{ status?: string, page?: number, limit?: number }} [opts]
+ * @param {{ search?: string, status?: string, page?: number, limit?: number }} [opts]
  * @returns {Promise<{items: any[], total: number}>}
  */
 async function listPets(opts = {}) {

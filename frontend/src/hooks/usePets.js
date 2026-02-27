@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchPets } from '../api/pets.api';
 
-export function usePets({ status, page, limit }) {
+export function usePets({ search, status, page, limit }) {
   return useQuery({
-    queryKey: ['pets', { status, page, limit }],
-    queryFn: () => fetchPets({ status, page, limit })
+    queryKey: ['pets', { search, status, page, limit }],
+    queryFn: () => fetchPets({ search, status, page, limit }),
+    placeholderData: (previousData) => previousData
   });
 }
