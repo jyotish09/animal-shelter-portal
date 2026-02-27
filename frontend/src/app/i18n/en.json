@@ -45,5 +45,16 @@
   "footer": {
     "contact": "Contact: (02) 5555 0123 \u2022 hello@happypaws.test",
     "hours": "Adoption hours: Mon\u2013Sat 10am\u20134pm"
+  },
+  "admin": {
+    "title": "Admin \u2022 Applications",
+    "subtitle": "No authentication in this demo. Approving one application adopts the pet and invalidates the rest.",
+    "allStatuses": "All statuses",
+    "petIdOptional": "Pet ID (optional)",
+    "clearFilters": "Clear filters",
+    "approve": "Approve",
+    "approving": "Approving\u2026",
+    "approved": "Approved",
+    "noResults": "No applications found for the current filters."
   }
 }

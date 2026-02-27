@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 
 const HomePage = lazy(() => import('../pages/HomePage'));
 const AdminPage = lazy(() => import('../pages/AdminPage'));
+const RouteErrorPage = lazy(() => import('../pages/RouteErrorPage'));
 
 function RootLayout() {
   return (
@@ -32,9 +33,28 @@ function Loading() {
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
+    errorElement: (
+      <Suspense fallback={<Loading />}>
+        <RouteErrorPage />
+      </Suspense>
+    ),
     children: [
-      { path: '/', element: <Suspense fallback={<Loading />}><HomePage /></Suspense> },
-      { path: '/admin', element: <Suspense fallback={<Loading />}><AdminPage /></Suspense> }
+      {
+        path: '/',
+        element: (
+          <Suspense fallback={<Loading />}>
+            <HomePage />
+          </Suspense>
+        )
+      },
+      {
+        path: '/admin',
+        element: (
+          <Suspense fallback={<Loading />}>
+            <AdminPage />
+          </Suspense>
+        )
+      }
     ]
   }
 ]);
