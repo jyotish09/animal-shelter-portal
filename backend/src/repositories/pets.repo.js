@@ -18,15 +18,15 @@ function mapPet(row) {
 }
 
 /**
- * List pets with offset pagination and search.
+ * List pets with offset pagination and filters.
  *
- * Search behavior:
- * - matches against name OR breed
- * - case-insensitive via LOWER(...)
- *
- * @param {import('sqlite').Database} db
- * @param {{ search?: string, status?: string, page?: number, limit?: number }} [opts]
- * @returns {Promise<{items: any[], total: number}>}
+ * Supported filters:
+ * - status
+ * - search: matches name OR breed (case-insensitive)
+ * - ageGroup:
+ *   - PUPPY => age_years <= 1
+ *   - ADULT => age_years BETWEEN 2 AND 7
+ *   - SENIOR => age_years >= 8
  */
 async function listPetsPaged(db, opts = {}) {
   const page = Number(opts.page ?? 1);
@@ -45,6 +45,17 @@ async function listPetsPaged(db, opts = {}) {
     const searchLike = `%${String(opts.search).toLowerCase()}%`;
     where.push('(LOWER(name) LIKE ? OR LOWER(breed) LIKE ?)');
     params.push(searchLike, searchLike);
+  }
+
+  if (opts.ageGroup === 'PUPPY') {
+    where.push('age_years <= ?');
+    params.push(1);
+  } else if (opts.ageGroup === 'ADULT') {
+    where.push('age_years BETWEEN ? AND ?');
+    params.push(2, 7);
+  } else if (opts.ageGroup === 'SENIOR') {
+    where.push('age_years >= ?');
+    params.push(8);
   }
 
   const whereSql = where.length ? ` WHERE ${where.join(' AND ')}` : '';

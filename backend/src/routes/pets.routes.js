@@ -26,6 +26,7 @@ const router = express.Router();
  */
 const listPetsQuerySchema = paginationQuerySchema.extend({
   status: z.enum(['AVAILABLE', 'PENDING', 'ADOPTED']).optional(),
+  ageGroup: z.enum(['PUPPY', 'ADULT', 'SENIOR']).optional(),
   search: z.preprocess(
     (value) => {
       if (typeof value !== 'string') return value;
@@ -37,7 +38,7 @@ const listPetsQuerySchema = paginationQuerySchema.extend({
 });
 
 /**
- * GET /api/pets?search=pug&status=AVAILABLE&page=1&limit=12
+ * GET /api/pets?search=pug&status=AVAILABLE&ageGroup=PUPPY&page=1&limit=12
  */
 router.get('/', validate({ query: listPetsQuerySchema }), petsController.listPets);
 

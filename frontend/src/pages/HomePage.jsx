@@ -38,6 +38,7 @@ export default function HomePage() {
   const limit = 12;
 
   const statusParam = status === PET_STATUS.ALL ? undefined : status;
+  const ageGroupParam = age === 'ANY' ? undefined : age;
   const searchParam = searchQuery.trim() ? searchQuery.trim() : undefined;
 
   /**
@@ -63,6 +64,7 @@ export default function HomePage() {
   const petsQuery = usePets({
     search: searchParam,
     status: statusParam,
+    ageGroup: ageGroupParam,
     page,
     limit
   });

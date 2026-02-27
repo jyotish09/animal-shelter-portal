@@ -2,11 +2,11 @@ import { httpJson } from './http';
 
 /**
  * GET /api/pets (paginated)
- * Query: search?, status?, page?, limit?
+ * Query: search?, status?, ageGroup?, page?, limit?
  */
-export function fetchPets({ search, status, page, limit }) {
+export function fetchPets({ search, status, ageGroup, page, limit }) {
   return httpJson('/api/pets', {
-    query: { search, status, page, limit }
+    query: { search, status, ageGroup, page, limit }
   });
 }
 

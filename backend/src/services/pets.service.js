@@ -1,6 +1,4 @@
 /**
- * src/services/pets.service.js
- *
  * Pet read operations.
  */
 
@@ -8,9 +6,15 @@ const { getDb } = require('../config/db');
 const petsRepo = require('../repositories/pets.repo');
 
 /**
- * List pets with offset pagination and search.
+ * List pets with offset pagination and filters.
  *
- * @param {{ search?: string, status?: string, page?: number, limit?: number }} [opts]
+ * @param {{
+ *   search?: string,
+ *   status?: string,
+ *   ageGroup?: 'PUPPY' | 'ADULT' | 'SENIOR',
+ *   page?: number,
+ *   limit?: number
+ * }} [opts]
  * @returns {Promise<{items: any[], total: number}>}
  */
 async function listPets(opts = {}) {
