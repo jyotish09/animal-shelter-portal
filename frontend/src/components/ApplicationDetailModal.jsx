@@ -121,9 +121,6 @@ export default function ApplicationDetailModal({ open, onClose, application }) {
                       <Typography color="text.secondary" sx={{ fontWeight: 600, mt: 0.25 }}>
                         {petMeta}
                       </Typography>
-                      <Typography color="text.secondary" sx={{ fontWeight: 600, mt: 1 }}>
-                        Pet ID: <span style={{ fontFamily: 'monospace' }}>{shortId(pet.id)}</span>
-                      </Typography>
                     </>
                   ) : (
                     <Typography color="text.secondary">No pet data.</Typography>
