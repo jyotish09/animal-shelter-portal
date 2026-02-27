@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: "4000"
+      NODE_ENV: "production"
+      LOG_LEVEL: "info"
+      # Container path for DB file:
+      DB_PATH: "/data/shelter.sqlite"
+      # Browser origin for dev:
+      CORS_ORIGIN: "http://localhost:5173"
+    volumes:
+      # Persist SQLite on host:
+      - ./db:/data
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      # Used by vite.config.js for proxy target inside Docker:
+      VITE_BACKEND_URL: "http://backend:4000"
+    depends_on:
+      - backend
