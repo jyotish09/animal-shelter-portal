@@ -40,7 +40,11 @@ const env = Object.freeze({
   PORT: readInt('PORT', 4000),
   DB_PATH: readEnv('DB_PATH', '../db/shelter.sqlite'),
   LOG_LEVEL: readEnv('LOG_LEVEL', 'info'),
-  CORS_ORIGIN: readEnv('CORS_ORIGIN', 'http://localhost:5173')
+  CORS_ORIGIN: readEnv('CORS_ORIGIN', 'http://localhost:5173'),
+
+  // Uploading files to test pet creation.
+  UPLOAD_DIR: readEnv('UPLOAD_DIR', './uploads'),
+  MAX_UPLOAD_BYTES: readInt('MAX_UPLOAD_BYTES', 15 * 1024 * 1024)
 });
 
 module.exports = { env };

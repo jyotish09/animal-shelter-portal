@@ -9,6 +9,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const pinoHttp = require('pino-http');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const { env } = require('./config/env');
 const { logger } = require('./utils/logger');
@@ -19,6 +21,11 @@ const { adminRouter } = require('./routes/admin.routes');
 
 function createApp() {
   const app = express();
+
+  const uploadDir = path.resolve(process.cwd(), env.UPLOAD_DIR);
+  const petUploadDir = path.join(uploadDir, 'pets');
+
+  fs.mkdirSync(petUploadDir, { recursive: true });
 
   app.use(helmet());
   app.use(express.json({ limit: '1mb' }));
@@ -42,6 +49,10 @@ function createApp() {
     })
   );
 
+  // Serve uploaded files first
+  app.use('/static/uploads', express.static(uploadDir));
+
+  // Existing checked-in assets
   app.use('/static', express.static('src/static'));
 
   app.use('/api/health', healthRouter);

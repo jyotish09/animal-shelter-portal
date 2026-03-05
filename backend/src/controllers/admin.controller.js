@@ -4,7 +4,10 @@
  * Admin controllers (no auth per requirements).
  */
 
+const fs = require('fs/promises');
+
 const adoptionService = require('../services/adoption.service');
+const petsService = require('../services/pets.service');
 
 function paginationMeta(page, limit, total) {
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -79,8 +82,44 @@ async function approveApplication(req, res, next) {
   }
 }
 
+/**
+ * POST /api/admin/pets
+ */
+async function createPet(req, res, next) {
+  const uploadedFile = req.file;
+
+  try {
+    const imageUrl = uploadedFile
+      ? `/static/uploads/pets/${uploadedFile.filename}`
+      : req.body.imageUrl;
+
+    const pet = await petsService.createPet({
+      name: req.body.name,
+      breed: req.body.breed,
+      ageYears: req.body.ageYears,
+      imageUrl
+    });
+
+    return res.status(201).json({
+      data: pet,
+      requestId: req.id
+    });
+  } catch (err) {
+    // Clean up uploaded file if DB insert fails
+    if (uploadedFile?.path) {
+      try {
+        await fs.unlink(uploadedFile.path);
+      } catch (_cleanupErr) {
+        // swallow cleanup errors; original error is more important
+      }
+    }
+    return next(err);
+  }
+}
+
 module.exports = {
   listApplications,
   listApplicationsForPet,
-  approveApplication
+  approveApplication,
+  createPet
 };

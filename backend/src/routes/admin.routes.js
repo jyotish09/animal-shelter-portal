@@ -6,12 +6,17 @@
 
 const express = require('express');
 const { validate } = require('../middleware/validate.middleware');
+const { uploadPetImage } = require('../middleware/upload.middleware');
 const adminController = require('../controllers/admin.controller');
 const {
   approveParamsSchema,
   listApplicationsQuerySchema,
   petParamsSchema
 } = require('../validators/applications.schemas');
+const {
+  createPetBodySchema,
+  validatePetImageSource
+} = require('../validators/admin-pets.schemas');
 const { paginationQuerySchema } = require('../validators/pagination.schemas');
 
 const router = express.Router();
@@ -41,6 +46,25 @@ router.patch(
   '/applications/:applicationId/approve',
   validate({ params: approveParamsSchema }),
   adminController.approveApplication
+);
+
+/**
+ * POST /api/admin/pets
+ * multipart/form-data
+ *
+ * Fields:
+ * - name
+ * - breed
+ * - ageYears
+ * - imageFile (optional, mutually exclusive with imageUrl)
+ * - imageUrl (optional, mutually exclusive with imageFile)
+ */
+router.post(
+  '/pets',
+  uploadPetImage.single('imageFile'),
+  validate({ body: createPetBodySchema }),
+  validatePetImageSource,
+  adminController.createPet
 );
 
 module.exports = { adminRouter: router };

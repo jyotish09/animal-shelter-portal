@@ -4,6 +4,7 @@
 
 const { getDb } = require('../config/db');
 const petsRepo = require('../repositories/pets.repo');
+const { newId } = require('../utils/id');
 
 /**
  * List pets with offset pagination and filters.
@@ -32,4 +33,27 @@ async function getPet(petId) {
   return petsRepo.getPetById(db, petId);
 }
 
-module.exports = { listPets, getPet };
+/**
+ * Create a new pet for the shelter.
+ *
+ * @param {{
+ *   name: string,
+ *   breed: string,
+ *   ageYears: number,
+ *   imageUrl: string
+ * }} payload
+ */
+async function createPet(payload) {
+  const db = await getDb();
+
+  return petsRepo.createPet(db, {
+    id: newId(),
+    name: payload.name,
+    breed: payload.breed,
+    ageYears: payload.ageYears,
+    status: 'AVAILABLE',
+    imageUrl: payload.imageUrl
+  });
+}
+
+module.exports = { listPets, getPet, createPet };

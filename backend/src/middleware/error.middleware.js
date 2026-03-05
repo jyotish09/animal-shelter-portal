@@ -87,6 +87,19 @@ function errorMiddleware(err, req, res, _next) {
     });
   }
 
+  if (err && err.name === 'MulterError') {
+    return res.status(400).json({
+      error: {
+        code: 'UPLOAD_ERROR',
+        message:
+          err.code === 'LIMIT_FILE_SIZE'
+            ? 'Uploaded image is too large.'
+            : 'Invalid file upload.'
+      },
+      requestId
+    });
+  }
+
   logger.error({ requestId, err }, 'Unhandled error');
   return res.status(500).json({
     error: {

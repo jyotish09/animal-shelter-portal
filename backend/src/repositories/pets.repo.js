@@ -102,4 +102,39 @@ async function updatePetStatus(db, petId, status) {
   return getPetById(db, petId);
 }
 
-module.exports = { listPetsPaged, getPetById, updatePetStatus };
+/**
+ * Create a new pet.
+ *
+ * @param {import('sqlite').Database} db
+ * @param {{
+ *   id: string,
+ *   name: string,
+ *   breed: string,
+ *   ageYears: number,
+ *   status: 'AVAILABLE' | 'PENDING' | 'ADOPTED',
+ *   imageUrl: string
+ * }} pet
+ */
+async function createPet(db, pet) {
+  await db.run(
+    `INSERT INTO pets(id, name, breed, age_years, status, image_url)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [
+      pet.id,
+      pet.name,
+      pet.breed,
+      pet.ageYears,
+      pet.status,
+      pet.imageUrl
+    ]
+  );
+
+  return getPetById(db, pet.id);
+}
+
+module.exports = {
+  listPetsPaged,
+  getPetById,
+  updatePetStatus,
+  createPet
+};
