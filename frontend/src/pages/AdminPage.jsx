@@ -26,11 +26,13 @@ import {
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DoneIcon from '@mui/icons-material/Done';
 import CloseIcon from '@mui/icons-material/Close';
+import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import { useAdminApplications } from '../hooks/useAdminApplications';
 import { useApproveApplication } from '../hooks/useApproveApplication';
 import ApplicationDetailModal from '../components/ApplicationDetailModal';
 import { usePetsByIds } from '../hooks/usePetsByIds';
+import NewPetModal from '../components/NewPetModal';
 
 const STATUS_ALL = 'ALL';
 
@@ -89,6 +91,9 @@ export default function AdminPage() {
 
   const statusParam = status === STATUS_ALL ? undefined : status;
   const searchParam = searchQuery.trim() ? searchQuery.trim() : undefined;
+
+  // New pet modal state
+  const [isNewPetOpen, setIsNewPetOpen] = useState(false);
 
   const debouncedSetSearchQuery = useMemo(
     () =>
@@ -157,6 +162,14 @@ export default function AdminPage() {
           <Typography color="text.secondary" sx={{ fontWeight: 600 }}>
             No authentication in this demo. Approving one application adopts the pet and invalidates the rest.
           </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setIsNewPetOpen(true)}
+            sx={{ borderRadius: 999, fontWeight: 900 }}
+          >
+            New Pet
+          </Button>
         </Stack>
 
         {/* Filters */}
@@ -358,6 +371,11 @@ export default function AdminPage() {
         open={Boolean(selected)}
         onClose={() => setSelected(null)}
         application={selected}
+      />
+
+      <NewPetModal
+        open={isNewPetOpen}
+        onClose={() => setIsNewPetOpen(false)}
       />
 
       <Snackbar

@@ -28,3 +28,33 @@ export function fetchApplicationsForPet({ petId, page, limit }) {
     query: { page, limit }
   });
 }
+
+/**
+ * POST /api/admin/pets
+ * multipart/form-data
+ */
+export async function createAdminPet(formData) {
+  const res = await fetch('/api/admin/pets', {
+    method: 'POST',
+    body: formData
+  });
+
+  const text = await res.text();
+  let json = null;
+
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    json = null;
+  }
+
+  if (!res.ok) {
+    const message = json?.error?.message || `Request failed (${res.status})`;
+    const err = new Error(message);
+    err.status = res.status;
+    err.payload = json;
+    throw err;
+  }
+
+  return json;
+}
