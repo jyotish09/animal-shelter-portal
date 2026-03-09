@@ -33,21 +33,51 @@ function createApp() {
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: false }));
 
   app.use(
-    pinoHttp({
-      logger,
-      genReqId: (req, res) => {
-        const existing = req.headers['x-request-id'];
-        const id = (typeof existing === 'string' && existing.trim()) ? existing : crypto.randomUUID();
-        res.setHeader('x-request-id', id);
-        return id;
+  pinoHttp({
+    logger,
+    genReqId: (req, res) => {
+      const existing = req.headers['x-request-id'];
+      const id = (typeof existing === 'string' && existing.trim())
+        ? existing
+        : crypto.randomUUID();
+      res.setHeader('x-request-id', id);
+      return id;
+    },
+
+    // Level mapping based on status
+    customLogLevel: (_req, res, err) => {
+      if (err || res.statusCode >= 500) return 'error';
+      if (res.statusCode >= 400) return 'warn';
+      return 'info';
+    },
+
+    // 🔑 Only log the fields you care about (prevents header dumps)
+    serializers: {
+      req(req) {
+        return {
+          id: req.id,
+          method: req.method,
+          url: req.url
+        };
       },
-      customLogLevel: (_req, res, err) => {
-        if (err || res.statusCode >= 500) return 'error';
-        if (res.statusCode >= 400) return 'warn';
-        return 'info';
+      res(res) {
+        return {
+          statusCode: res.statusCode
+        };
       }
-    })
-  );
+    },
+
+    // Cleaner one-line messages (works great with pino-pretty)
+    customSuccessMessage: (req, res) => `${req.method} ${req.url} -> ${res.statusCode}`,
+    customErrorMessage: (req, res, err) =>
+      `${req.method} ${req.url} -> ${res.statusCode} (${err?.message || 'error'})`,
+
+    // Optional: ignore very noisy endpoints
+    autoLogging: {
+      ignore: (req) => req.url.startsWith('/api/health')
+    }
+  })
+);
 
   // Serve uploaded files first
   app.use('/static/uploads', express.static(uploadDir));
